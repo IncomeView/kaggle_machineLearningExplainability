@@ -30,10 +30,12 @@ jobs:
         run: |
           python scripts/write_version.py
 
-      - name: Execute notebooks
+      - name: Execute all notebooks
         run: |
-          papermill notebooks/lesson01_intro.ipynb notebooks/lesson01_intro_out.ipynb
-          papermill notebooks/lesson02_permutation.ipynb notebooks/lesson02_permutation_out.ipynb
+          for nb in notebooks/*.ipynb; do
+              echo "Executando $nb"
+              papermill "$nb" "${nb%.ipynb}_out.ipynb"
+          done
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
