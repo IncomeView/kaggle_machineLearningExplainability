@@ -22,6 +22,7 @@ __pycache__/
 # Data
 data/raw/
 data/processed/
+!data/raw/medical_readmissions.csv
 datasets/
 *.csv
 *.parquet
