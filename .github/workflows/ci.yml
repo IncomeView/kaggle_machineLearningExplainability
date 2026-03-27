@@ -25,11 +25,6 @@ jobs:
       run: |
         pip install --upgrade pip
         pip install -r requirements.txt
-        pip install papermill nbconvert nbformat eli5 ipykernel
-
-    - name: Register Jupyter kernel
-      run: |
-        python -m ipykernel install --user --name python3
 
     - name: Execute all notebooks
       run: |
