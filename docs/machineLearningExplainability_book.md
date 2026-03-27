@@ -508,6 +508,9 @@ O processo é:
 6. Desfaça o embaralhamento.  
 7. Repita para todas as colunas.
 
+💡 A técnica funciona para qualquer modelo: lineares, árvores, boosting, redes neurais, etc.
+
+
 <br>
 
 ### 🔍 Por que isso funciona?
@@ -536,6 +539,12 @@ Isso explica por que os resultados aparecem como:
 ```
 0.1750 ± 0.0848
 ```
+
+📌 *Observação importante:*  
+A importância calculada depende da métrica usada.  
+Em regressão, medimos aumento do erro (MAE, RMSE).  
+Em classificação, medimos queda de acurácia, F1, etc.
+
 
 </details>
 
@@ -603,6 +612,17 @@ perm = PermutationImportance(model, random_state=1).fit(X_valid, y_valid)
 eli5.show_weights(perm, feature_names=X_valid.columns.tolist())
 ~~~
 
+### Exemplo de saída típica de Permutation Importance
+
+Feature                | Importance
+---------------------- | -------------------------
+abs_lat_change         | 0.175 ± 0.08
+abs_lon_change         | 0.120 ± 0.05
+pickup_latitude        | 0.045 ± 0.02
+dropoff_latitude       | 0.040 ± 0.02
+pickup_longitude       | 0.010 ± 0.01
+
+
 **Por que usar eli5:**  
 - Implementação otimizada  
 - Interface clara  
@@ -620,6 +640,12 @@ for col in ["age", "age_squared"]:
 **O que isso demonstra:**  
 - Features correlacionadas podem “dividir” importância  
 - Permutation Importance não detecta redundância estrutural  
+
+
+### Exemplo adicional — Features correlacionadas dividem importância
+
+Se `age` e `age_squared` carregam a mesma informação, o modelo pode dividir a importância entre elas, mesmo que uma delas seja redundante.
+
 
 ---
 
@@ -659,6 +685,11 @@ Permutation Importance conecta-se diretamente ao Capítulo 1:
 
 É a primeira ferramenta prática para “abrir a caixa‑preta”.
 
+📌 Comparação rápida:  
+A importância nativa de árvores mede redução de impureza, mas pode ser enviesada.  
+Permutation Importance mede impacto real na performance e é mais confiável.
+
+
 </details>
 
 ---
@@ -673,6 +704,9 @@ Permutation Importance conecta-se diretamente ao Capítulo 1:
 - Comparar importâncias relativas, não absolutas.  
 - Usar como ferramenta de **debugging** e **sanidade**.  
 - Verificar se features importantes fazem sentido no domínio.
+- Em datasets pequenos, a técnica pode ser dominada pelo ruído, produzindo importâncias instáveis.
+- Em modelos muito grandes, o custo computacional cresce proporcionalmente ao número de features × número de repetições.
+
 
 ---
 
@@ -743,4 +777,333 @@ O próximo capítulo apresenta:
 
 <br>
 
-# 3
+# 📘 Capítulo 3 — Partial Dependence Plots (PDPs)
+<details>
+
+### *Machine Learning Explainability — Um Guia Prático e Comentado*
+
+<br>
+
+---
+
+## 🟦 3.1. Introdução
+<details>
+<br>
+
+No capítulo anterior, aprendemos a responder uma pergunta essencial:
+
+**Quais features mais influenciam o modelo?**
+
+Mas isso não basta.  
+Saber *o que importa* não revela *como importa*.
+
+Para isso, precisamos de uma técnica capaz de isolar o efeito de uma variável, mantendo todas as outras constantes.  
+Essa técnica é o **Partial Dependence Plot (PDP)**.
+
+Ele permite visualizar:
+
+- a direção do efeito (positivo, negativo, não linear);
+- a intensidade do efeito;
+- regiões onde o modelo é mais sensível;
+- possíveis interações entre variáveis.
+
+Este capítulo explica a intuição, o funcionamento e as limitações dos PDPs, preparando você para os exercícios da Lesson 3 do Kaggle.
+
+</details>
+
+---
+
+## 🟩 3.2. Revisão do fluxo anterior
+<details>
+<br>
+
+No Capítulo 2 vimos:
+
+- Permutation Importance → *o que importa*  
+- Mas não → *como cada feature afeta a previsão*
+
+Agora avançamos para a primeira técnica que revela **a forma da relação** entre feature e previsão.
+
+</details>
+
+---
+
+## 🟧 3.3. Apresentação do problema
+<details>
+<br>
+
+Mesmo sabendo quais variáveis são importantes, ainda falta responder:
+
+**Se eu variar apenas uma feature, mantendo todas as outras iguais, como a previsão muda?**
+
+Essa pergunta é essencial para:
+
+- validar comportamento do modelo;
+- identificar efeitos não lineares;
+- investigar interações;
+- comunicar resultados para stakeholders;
+- detectar padrões espúrios.
+
+Sem uma ferramenta adequada, seria impossível separar o efeito de uma feature das demais.
+
+É aqui que entram os **Partial Dependence Plots**.
+
+</details>
+
+---
+
+## 🟨 3.4. Conceito central — O que é um Partial Dependence Plot
+<details>
+<br>
+
+A ideia central é simples:
+
+> PDP mostra como a previsão média muda quando variamos uma feature, mantendo todas as outras constantes.
+
+### 🔍 Intuição fundamental
+
+Pegue uma linha do dataset:
+
+- idade = 40  
+- renda = 8.000  
+- score = 720  
+
+Agora faça um experimento mental:
+
+1. Mantenha tudo igual.  
+2. Varie apenas a idade (20, 30, 40, 50…).  
+3. Observe como a previsão muda.  
+4. Repita para várias linhas.  
+5. Tire a média.
+
+O resultado é uma curva que mostra:
+
+- se a relação é linear;
+- se há saturação;
+- se há regiões de instabilidade;
+- se o modelo aprendeu padrões estranhos.
+
+### 🔬 O que o PDP mede
+
+- efeito marginal médio de uma feature;
+- comportamento global do modelo;
+- forma da relação (reta, curva, U, degraus).
+
+### 🚫 O que o PDP não mede
+
+- efeitos individuais (isso é papel do ICE e SHAP);
+- causalidade;
+- efeitos condicionais;
+- comportamento em regiões sem dados.
+
+</details>
+
+---
+
+## 🟦 3.5. Exemplos conceituais com código
+<details>
+<br>
+
+A seguir, exemplos **conceituais**, não ligados ao dataset do Kaggle.
+
+---
+
+### 🧩 Exemplo 1 — PDP manual (intuição)
+
+~~~python
+import numpy as np
+
+def pdp_manual(model, X, feature, grid):
+    preds = []
+    X_temp = X.copy()
+    for val in grid:
+        X_temp[feature] = val
+        preds.append(model.predict(X_temp).mean())
+    return preds
+~~~
+
+**O que este código faz:**  
+- congela todas as features;  
+- varia apenas uma;  
+- calcula a previsão média;  
+- retorna a curva do PDP.
+
+---
+
+### 🧩 Exemplo 2 — PDP com scikit‑learn
+
+~~~python
+from sklearn.inspection import PartialDependenceDisplay
+
+PartialDependenceDisplay.from_estimator(
+    model,
+    X_valid,
+    ['idade']
+)
+~~~
+
+**Por que usar scikit‑learn:**  
+- implementação otimizada;  
+- suporte a 1D e 2D;  
+- integração com pipelines.
+
+---
+
+### 🧩 Exemplo 3 — PDP 2D (interações)
+
+~~~python
+from sklearn.inspection import PartialDependenceDisplay
+
+PartialDependenceDisplay.from_estimator(
+    model,
+    X_valid,
+    [('idade', 'renda')]
+)
+~~~
+
+**Interpretação:**  
+- eixo X = idade  
+- eixo Y = renda  
+- cores = previsão média  
+
+---
+
+### 🧩 Exemplo 4 — Comparando modelos
+
+~~~python
+from sklearn.inspection import PartialDependenceDisplay
+
+PartialDependenceDisplay.from_estimator(tree_model, X, ['idade'])
+PartialDependenceDisplay.from_estimator(rf_model, X, ['idade'])
+~~~
+
+**Por que comparar:**  
+- árvores → curvas em degraus  
+- florestas → curvas suaves  
+
+---
+
+### 🧩 Exemplo 5 — PDP com dados sintéticos (exemplo adicional)
+
+~~~python
+import numpy as np
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.inspection import PartialDependenceDisplay
+
+# Dados sintéticos
+X = np.linspace(0, 10, 200).reshape(-1, 1)
+y = np.sin(X).ravel() + np.random.normal(0, 0.1, 200)
+
+model = RandomForestRegressor(random_state=0).fit(X, y)
+
+PartialDependenceDisplay.from_estimator(model, X, [0])
+~~~
+
+**O que este exemplo mostra:**  
+- modelos não lineares capturam curvas suaves;  
+- PDP revela a forma aprendida.
+
+</details>
+
+---
+
+## 🟫 3.6. Integração com capítulos anteriores
+<details>
+<br>
+
+| Técnica | Responde |
+|--------|----------|
+| **Permutation Importance** | *O que importa?* |
+| **PDP** | *Como importa?* |
+
+PDP prepara o terreno para o próximo capítulo:
+
+> **SHAP — explicações individuais para cada previsão.**
+
+</details>
+
+---
+
+## 🟪 3.7. Boas práticas e limitações
+<details>
+<br>
+
+### ✔ Boas práticas
+- Usar PDP apenas em regiões com dados reais.  
+- Comparar modelos para entender diferenças estruturais.  
+- Usar 2D PDP para investigar interações.  
+- Validar se a curva faz sentido no domínio.  
+- Usar grid mais denso para curvas suaves.
+
+---
+
+### ⚠ Limitações importantes
+- Assume independência entre features.  
+- Pode gerar valores irreais (ex.: latitude impossível).  
+- Pode mascarar efeitos individuais (PDP = média das curvas ICE).  
+- Pode ser enganado por interações fortes.  
+- Não revela causalidade.  
+- Pode extrapolar para regiões sem dados.  
+- Pode ser instável em datasets pequenos.
+
+</details>
+
+---
+
+## 🟧 3.8. Glossário técnico
+<details>
+<br>
+
+- **Partial Dependence Plot (PDP)** — curva que mostra o efeito médio de uma feature.  
+- **Interação** — quando o efeito de uma feature depende de outra.  
+- **Grid Resolution** — número de pontos usados para construir a curva.  
+- **Marginalização** — média sobre todas as outras features.  
+- **Extrapolação** — prever em regiões sem dados reais.  
+- **Curva em degraus** — típica de árvores de decisão.  
+- **Curva suave** — típica de florestas e boosting.
+
+</details>
+
+---
+
+## 🟨 3.9. Referência rápida
+<details>
+<br>
+
+- PDP mostra **como** uma feature afeta a previsão.  
+- Varia uma feature, mantém as outras constantes.  
+- Mede efeito **marginal médio**.  
+- Funciona para qualquer modelo.  
+- Pode ser 1D ou 2D.  
+- Não mostra efeitos individuais.  
+- Assume independência entre features.  
+- Complementa Permutation Importance.
+
+</details>
+
+---
+
+## 🟩 3.10. Conclusão do capítulo
+<details>
+<br>
+
+Partial Dependence Plots são uma das ferramentas mais importantes para interpretar modelos de machine learning.  
+Eles revelam **a forma da relação** entre features e previsões, permitindo:
+
+- validar comportamento do modelo;  
+- identificar padrões não lineares;  
+- investigar interações;  
+- comunicar resultados de forma clara.
+
+No próximo capítulo, avançaremos para uma técnica ainda mais poderosa:
+
+> **SHAP — explicações individuais para cada previsão.**
+
+<br>
+</details>
+</details>
+<br>
+
+---
+
+# 4

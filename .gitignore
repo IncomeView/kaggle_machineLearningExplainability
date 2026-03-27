@@ -26,6 +26,7 @@ data/processed/
 datasets/
 *.csv
 *.parquet
+notebooks/notebooks_model.md
 
 # Models
 models/
