@@ -1,0 +1,44 @@
+name: CD - Deploy Explainability ML
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install papermill nbconvert nbformat
+
+      - name: Generate VERSION
+        run: |
+          python scripts/write_version.py
+
+      - name: Execute notebooks
+        run: |
+          papermill notebooks/lesson01_intro.ipynb notebooks/lesson01_intro_out.ipynb
+          papermill notebooks/lesson02_permutation.ipynb notebooks/lesson02_permutation_out.ipynb
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.ref_name }}
+          path: |
+            VERSION
+            notebooks/*_out.ipynb
+            outputs/
