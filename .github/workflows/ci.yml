@@ -28,15 +28,12 @@ jobs:
         pip install papermill nbconvert nbformat
         pip install eli5
 
-    - name: Execute lesson 01
+    - name: Execute all notebooks
       run: |
-        papermill notebooks/lesson01_intro.ipynb \
-                 notebooks/lesson01_intro_out.ipynb
-
-    - name: Execute lesson 02
-      run: |
-        papermill notebooks/lesson02_permutation.ipynb \
-                 notebooks/lesson02_permutation_out.ipynb
+        for nb in notebooks/*.ipynb; do
+            echo "Executando $nb"
+            papermill "$nb" "${nb%.ipynb}_out.ipynb"
+        done
 
     - name: Generate VERSION file
       run: |
