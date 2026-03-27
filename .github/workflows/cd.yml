@@ -24,6 +24,7 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install papermill nbconvert nbformat
+          pip install eli5
 
       - name: Generate VERSION
         run: |

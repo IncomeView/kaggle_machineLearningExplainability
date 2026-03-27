@@ -26,11 +26,17 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install papermill nbconvert nbformat
+        pip install eli5
 
-    - name: Validate notebooks (execução completa)
+    - name: Execute lesson 01
       run: |
-        papermill notebooks/lesson01_intro.ipynb notebooks/lesson01_intro_out.ipynb
-        papermill notebooks/lesson02_permutation.ipynb notebooks/lesson02_permutation_out.ipynb
+        papermill notebooks/lesson01_intro.ipynb \
+                 notebooks/lesson01_intro_out.ipynb
+
+    - name: Execute lesson 02
+      run: |
+        papermill notebooks/lesson02_permutation.ipynb \
+                 notebooks/lesson02_permutation_out.ipynb
 
     - name: Generate VERSION file
       run: |
