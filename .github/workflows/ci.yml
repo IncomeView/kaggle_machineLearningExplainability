@@ -30,7 +30,7 @@ jobs:
       run: |
         for nb in notebooks/*.ipynb; do
             echo "Executando $nb"
-            papermill "$nb" "${nb%.ipynb}_out.ipynb"
+            papermill "$nb" "${nb%.ipynb}_out.ipynb" --kernel python3
         done
 
     - name: Generate VERSION file

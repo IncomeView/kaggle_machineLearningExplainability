@@ -4,7 +4,9 @@ scikit-learn
 matplotlib
 seaborn
 eli5
+shap
 ipykernel
 nbformat
 nbconvert
 papermill
+jupyter
