@@ -1,5 +1,5 @@
-# 📘 Machine Learning Explainability — Kaggle  
-### *Estudo, Notebooks e Companion Book*
+## 📘 Machine Learning Explainability — Kaggle  
+#### *Estudo, Notebooks e Companion Book*
 
 Este repositório contém todo o material de estudo, prática e documentação produzidos durante o curso **Kaggle Machine Learning Explainability**.  
 O objetivo é entender profundamente **como interpretar modelos de Machine Learning**, indo além da simples construção de modelos.
@@ -14,7 +14,7 @@ Aqui você encontrará:
 
 ---
 
-# 🧭 1. Objetivo do Repositório
+## 🧭 1. Objetivo do Repositório
 
 Este repositório documenta:
 
@@ -28,7 +28,7 @@ O foco é **entender modelos**, não apenas treiná‑los.
 
 ---
 
-# 📚 2. Companion Book
+## 📚 2. Companion Book
 
 O livro **“Machine Learning Explainability — Guia Prático e Comentado”** acompanha o curso e explica:
 
@@ -57,7 +57,7 @@ Cada capítulo segue o **Prompt Mestre**, garantindo:
 
 ---
 
-# 🧪 3. Notebooks do Curso
+## 🧪 3. Notebooks do Curso
 
 Os notebooks seguem a sequência do Kaggle:
 
@@ -80,7 +80,7 @@ Cada notebook contém:
 
 ---
 
-# 🏗️ 4. Estrutura do Projeto
+## 🏗️ 4. Estrutura do Projeto
 
 ```
 machine-learning-explainability/
@@ -105,7 +105,7 @@ machine-learning-explainability/
 
 ---
 
-# 🧠 5. Processo de Estudo
+## 🧠 5. Processo de Estudo
 
 O estudo segue um fluxo consistente:
 
@@ -125,7 +125,7 @@ Esse processo garante:
 
 ---
 
-# 🧩 6. Tecnologias Utilizadas
+## 🧩 6. Tecnologias Utilizadas
 
 - Python  
 - Pandas  
@@ -136,7 +136,7 @@ Esse processo garante:
 
 ---
 
-# 🧪 7. Como Reproduzir o Ambiente
+## 🧪 7. Como Reproduzir o Ambiente
 
 Instale as dependências:
 
@@ -152,7 +152,7 @@ jupyter notebook
 
 ---
 
-# 🚀 8. Próximos Passos
+## 🚀 8. Próximos Passos
 
 - Criar o Capítulo 1 — Permutation Importance  
 - Criar o notebook correspondente  
@@ -162,7 +162,7 @@ jupyter notebook
 
 ---
 
-# 🤝 9. Autor
+## 🤝 9. Autor
 
 **Moacir**  
 Estudo contínuo em Machine Learning, Data Science e Engenharia de Dados.  

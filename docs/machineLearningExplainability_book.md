@@ -1106,4 +1106,703 @@ No próximo capítulo, avançaremos para uma técnica ainda mais poderosa:
 
 ---
 
-# 4
+# 📘 Capítulo 4 — SHAP Values  
+<details>
+
+### *Machine Learning Explainability — Um Guia Prático e Comentado*
+
+<br>
+
+---
+
+## **4.1. Introdução**
+<details>
+<br>
+
+Nos capítulos anteriores, aprendemos a extrair insights globais sobre modelos:
+
+- **Permutation Importance** mostrou *quais* variáveis importam.  
+- **Partial Dependence Plots (PDPs)** mostraram *como* cada variável afeta a previsão média.
+
+Mas ainda falta uma peça essencial:
+
+> **Por que o modelo fez esta previsão específica?**
+
+Em áreas como saúde, crédito e políticas públicas, essa pergunta não é opcional — é obrigatória.  
+Modelos precisam justificar decisões individuais.
+
+É aqui que entram os **SHAP Values** (*SHapley Additive exPlanations*), uma técnica elegante e matematicamente consistente para decompor uma previsão em contribuições individuais de cada feature.
+
+Este capítulo explica:
+
+- a intuição por trás dos valores de Shapley;  
+- como SHAP decompõe uma previsão;  
+- como interpretar gráficos de força (*force plots*);  
+- como SHAP complementa Permutation Importance e PDPs;  
+- como preparar o leitor para o Exercise 4.
+
+</details>
+
+---
+
+## **4.2. Revisão do fluxo anterior**
+<details>
+<br>
+
+Até aqui, construímos uma base sólida:
+
+### ✔ Capítulo 2 — Permutation Importance  
+Aprendemos a medir **o que importa globalmente**.
+
+### ✔ Capítulo 3 — Partial Dependence Plots  
+Aprendemos **como uma feature afeta a previsão média**.
+
+Mas PDPs não explicam:
+
+- por que *este paciente* foi classificado como alto risco;  
+- por que *este cliente* teve crédito negado;  
+- por que *esta corrida* teve tarifa alta.
+
+Para isso, precisamos de explicações **locais**, específicas para cada linha do dataset.
+
+É exatamente o papel dos **SHAP Values**.
+
+</details>
+
+---
+
+## **4.3. Apresentação do problema**
+<details>
+<br>
+
+Imagine um hospital usando um modelo para prever risco de readmissão.
+
+O modelo prevê:
+
+> **“Paciente com 72% de chance de ser readmitido.”**
+
+O médico pergunta:
+
+- *“Por quê?”*  
+- *“Quais fatores aumentaram esse risco?”*  
+- *“Quais fatores diminuíram?”*  
+- *“O que eu posso fazer a respeito?”*
+
+Permutation Importance e PDPs não respondem isso.
+
+Precisamos de uma técnica que:
+
+- explique **uma previsão individual**;  
+- mostre **quanto cada feature contribuiu**;  
+- permita comparar pacientes;  
+- seja consistente matematicamente.
+
+Essa técnica é **SHAP**.
+
+</details>
+
+---
+
+## **4.4. Conceito central — O que são SHAP Values**
+<details>
+<br>
+
+SHAP Values são baseados na teoria de **valores de Shapley**, da Teoria dos Jogos Cooperativos.
+
+A ideia é elegante:
+
+> Cada feature é um “jogador” que contribui para a previsão.  
+> O valor SHAP mede a contribuição justa de cada jogador.
+
+### ✔ Intuição simples
+
+Para uma previsão individual:
+
+previsão = valor_base + soma(das contribuições de cada feature)
+
+Onde:
+
+- **valor_base** = previsão média do modelo  
+- **contribuição de cada feature** = SHAP value  
+
+### ✔ Exemplo conceitual
+
+Se o modelo prevê:
+
+- Risco previsto = 0.70  
+- Valor base = 0.50  
+
+Então a soma dos SHAP values deve ser:
+
+0.70 – 0.50 = 0.20
+
+Cada feature explica uma parte desse 0.20.
+
+### ✔ O que SHAP mede
+
+- impacto **local** de cada feature;  
+- contribuição positiva (aumenta a previsão);  
+- contribuição negativa (reduz a previsão);  
+- decomposição exata da previsão.
+
+### ✔ O que SHAP NÃO mede
+
+- causalidade;  
+- importância global (embora possa ser agregada);  
+- efeitos médios (isso é PDP);  
+- interações complexas (a menos que usemos extensões específicas).
+
+### ✔ Por que SHAP é tão valorizado?
+
+- é matematicamente consistente;  
+- é local e global ao mesmo tempo;  
+- funciona para qualquer modelo;  
+- tem visualizações intuitivas;  
+- é amplamente aceito em áreas reguladas (saúde, finanças).
+
+</details>
+
+---
+
+## **4.5. Exemplos conceituais com código**
+<details>
+<br>
+
+Os exemplos abaixo são **conceituais**, usando dados sintéticos, apenas para ilustrar o funcionamento.
+
+---
+
+### 🧩 Exemplo 1 — SHAP em um modelo de árvore
+
+~~~python
+import shap
+import numpy as np
+from sklearn.ensemble import RandomForestRegressor
+
+# Dados sintéticos
+X = np.random.randn(200, 3)
+y = X[:, 0] * 3 + X[:, 1] * -2 + np.random.randn(200)
+
+model = RandomForestRegressor(random_state=0).fit(X, y)
+
+# Explicador SHAP para modelos de árvore
+explainer = shap.TreeExplainer(model)
+
+# SHAP values para uma única linha
+row = X[5:6]
+shap_values = explainer.shap_values(row)
+~~~
+
+**O que este código faz**
+
+- Treina um modelo simples;  
+- Cria um explicador SHAP específico para árvores;  
+- Calcula SHAP values para uma previsão individual.
+
+---
+
+### 🧩 Exemplo 2 — Force Plot (explicação visual)
+
+~~~python
+shap.initjs()
+shap.force_plot(explainer.expected_value, shap_values, row)
+~~~
+
+**Interpretação**
+
+- barras em rosa: contribuições que aumentam a previsão;  
+- barras em azul: contribuições que reduzem a previsão;  
+- o comprimento de cada barra representa a magnitude da contribuição;  
+- a soma das contribuições desloca o valor base até a previsão final.
+
+---
+
+### 🧩 Exemplo 3 — SHAP com KernelExplainer (modelo genérico)
+
+~~~python
+import shap
+
+# Usando as primeiras linhas de X como background
+background = X[:50]
+
+explainer = shap.KernelExplainer(model.predict, background)
+shap_values_kernel = explainer.shap_values(row)
+~~~
+
+**Quando usar**
+
+- modelos lineares;  
+- redes neurais;  
+- modelos arbitrários sem estrutura de árvore.
+
+**Observação**
+
+- KernelExplainer é mais lento e fornece uma aproximação dos valores SHAP;  
+- é útil quando não há explicador específico para o tipo de modelo.
+
+---
+
+### 🧩 Exemplo 4 — Decomposição da previsão
+
+~~~python
+pred = model.predict(row)[0]
+base = explainer.expected_value
+contrib = shap_values.sum()
+
+print("Previsão do modelo:", pred)
+print("Base + soma das contribuições:", base + contrib)
+~~~
+
+**Resultado esperado**
+
+- As duas quantidades devem ser praticamente iguais;  
+- Isso ilustra a propriedade aditiva dos valores SHAP.
+
+</details>
+
+---
+
+## **4.6. Integração com capítulos anteriores**
+<details>
+<br>
+
+Podemos resumir o papel de cada técnica da seguinte forma:
+
+| Técnica                    | Pergunta principal                                  |
+|---------------------------|-----------------------------------------------------|
+| **Permutation Importance** | O que importa globalmente?                         |
+| **PDP**                   | Como a previsão média muda ao variar uma feature?   |
+| **SHAP**                  | Por que esta previsão específica aconteceu?         |
+
+SHAP complementa as técnicas anteriores:
+
+- **Permutation Importance** fornece uma visão global de relevância;  
+- **PDP** mostra a forma média da relação entre feature e previsão;  
+- **SHAP** explica, em detalhe, cada previsão individual.
+
+No contexto do problema de readmissão hospitalar (Exercise 4), SHAP será usado para:
+
+- explicar o risco previsto para um paciente específico;  
+- destacar quais fatores aumentaram ou reduziram esse risco;  
+- apoiar a comunicação com médicos e outros profissionais de saúde.
+
+</details>
+
+---
+
+## **4.7. Boas práticas e limitações**
+<details>
+<br>
+
+### ✔ Boas práticas
+
+- **Usar TreeExplainer** sempre que o modelo for baseado em árvores (Random Forest, Gradient Boosting, etc.);  
+- **Usar KernelExplainer** apenas quando não houver explicador específico para o tipo de modelo;  
+- **Focar nas maiores contribuições** ao explicar uma previsão individual, evitando sobrecarregar o leitor com dezenas de features;  
+- **Comparar pacientes ou casos** com perfis diferentes para entender padrões de risco;  
+- **Combinar SHAP com outras técnicas** (Permutation Importance, PDP) para obter uma visão completa do modelo.
+
+---
+
+### ⚠ Limitações
+
+- **Custo computacional**: KernelExplainer pode ser muito lento em datasets grandes;  
+- **Suposições de independência**: algumas variantes de SHAP assumem independência entre features, o que pode não refletir a realidade;  
+- **Interpretação em alta dimensão**: com muitas features, a leitura dos gráficos pode se tornar complexa;  
+- **Não implica causalidade**: SHAP explica o comportamento do modelo, não relações causais no mundo real;  
+- **Sensibilidade a dados escassos**: em regiões com poucos dados, as explicações podem ser menos confiáveis.
+
+</details>
+
+---
+
+## **4.8. Glossário técnico**
+<details>
+<br>
+
+- **SHAP Value** — medida da contribuição de uma feature para uma previsão individual.  
+- **Base Value (valor base)** — previsão média do modelo antes de considerar as features específicas de um caso.  
+- **Force Plot** — visualização que mostra como cada feature empurra a previsão para cima ou para baixo em relação ao valor base.  
+- **TreeExplainer** — explicador SHAP otimizado e exato para modelos de árvore.  
+- **KernelExplainer** — explicador SHAP genérico, baseado em amostragem, aplicável a qualquer modelo.  
+- **Local Explanation** — explicação de uma previsão específica, para uma única linha de dados.  
+- **Modelo aditivo** — modelo em que a soma das contribuições das features explica a diferença entre o valor base e a previsão.
+
+</details>
+
+---
+
+## **4.9. Referência rápida**
+<details>
+<br>
+
+- SHAP fornece **explicações locais** para previsões individuais;  
+- A previsão é decomposta como:
+
+  previsão ≈ valor_base + soma(dos SHAP values)
+
+- Contribuições positivas aumentam a previsão;  
+- Contribuições negativas reduzem a previsão;  
+- TreeExplainer é a escolha padrão para modelos de árvore;  
+- KernelExplainer é mais geral, porém mais lento;  
+- SHAP complementa Permutation Importance e PDPs, conectando visão global e explicações individuais.
+
+</details>
+
+---
+
+## **4.10. Conclusão do capítulo**
+<details>
+<br>
+
+Neste capítulo, você viu:
+
+- a motivação para explicações individuais de previsões;  
+- a intuição por trás dos valores de Shapley;  
+- como SHAP decompõe uma previsão em contribuições de cada feature;  
+- exemplos conceituais de uso com modelos de árvore e explicadores genéricos;  
+- como SHAP se integra às técnicas vistas anteriormente (Permutation Importance e PDPs).
+
+No próximo passo, no **Exercise 4**, você aplicará SHAP em um cenário de readmissão hospitalar, construindo explicações individuais para pacientes e criando funções que destacam fatores de risco relevantes.
+
+Esse exercício conecta:
+
+- teoria;  
+- prática;  
+- comunicação com especialistas de domínio.
+
+Ele marca a transição de ferramentas isoladas de explicabilidade para um fluxo completo de análise e comunicação de modelos.
+
+<br>
+</details>
+</details>
+<br>
+
+---
+
+# 📘 Capítulo 5 — SHAP Avançado  
+<details>
+
+### *Machine Learning Explainability — Um Guia Prático e Comentado*
+
+<br>
+
+---
+
+## 5.1. Introdução
+<details>
+<br>
+
+Nos capítulos anteriores, você aprendeu três formas complementares de extrair insights de modelos:
+
+- **Permutation Importance** — o que importa  
+- **PDPs** — como importa  
+- **SHAP Values** — por que uma previsão específica foi feita  
+
+Agora avançamos para o uso **avançado** dos valores SHAP.
+
+A Lesson 5 do Kaggle mostra que, além de explicar previsões individuais, SHAP pode ser **agregado** para revelar:
+
+- padrões globais  
+- interações entre variáveis  
+- efeitos não lineares  
+- comportamentos complexos que nem PDPs nem Permutation Importance capturam
+
+Este capítulo explica esses usos avançados, preparando você para interpretar:
+
+- **SHAP Summary Plot**  
+- **SHAP Dependence Contribution Plot**
+
+</details>
+
+---
+
+## 5.2. Revisão do fluxo anterior
+<details>
+<br>
+
+Até aqui, você aprendeu:
+
+- **Permutation Importance** → o que importa  
+- **PDPs** → como importa (em média)  
+- **SHAP Values (básico)** → por que uma previsão específica foi feita  
+
+Agora vamos combinar SHAP com agregações para obter:
+
+- importância global mais detalhada  
+- efeitos não lineares  
+- interações entre features  
+- variações individuais dentro de uma mesma feature  
+
+Essas técnicas completam o conjunto de ferramentas de interpretabilidade.
+
+</details>
+
+---
+
+## 5.3. Apresentação do problema
+<details>
+<br>
+
+Mesmo com SHAP básico, ainda restam perguntas importantes:
+
+- Uma feature tem efeito **constante** ou **variável**?  
+- O efeito muda dependendo de outras features?  
+- Existem **interações** que o modelo aprendeu?  
+- A importância de uma feature vem de **poucos casos extremos** ou de **efeitos consistentes**?  
+- Como comparar duas features com importâncias semelhantes?
+
+Essas perguntas não são respondidas por:
+
+- Permutation Importance  
+- PDPs  
+- SHAP individual  
+
+Para isso, precisamos de **agregações de SHAP Values**.
+
+</details>
+
+---
+
+## 5.4. Conceito central — SHAP Summary & Dependence Plots
+<details>
+<br>
+
+### SHAP Summary Plot
+
+É o gráfico global mais importante do SHAP. Ele mostra, em um único painel:
+
+- importância global  
+- direção do efeito  
+- magnitude do efeito  
+- distribuição dos efeitos  
+- presença de interações  
+- comportamento de valores altos e baixos  
+
+Cada ponto representa:
+
+- uma linha do dataset  
+- uma feature  
+- um SHAP value  
+
+**Eixos:**
+
+- eixo Y → features ordenadas por importância  
+- eixo X → impacto no modelo (SHAP value)  
+- cor → valor da feature (alto/baixo)
+
+---
+
+### SHAP Dependence Contribution Plot
+
+É a versão avançada do PDP.
+
+Ele mostra:
+
+- como o valor da feature afeta o SHAP value  
+- como esse efeito varia entre observações  
+- como outra feature interage com ela (via cor)
+
+Enquanto o PDP mostra **a média**, o SHAP dependence mostra **a distribuição completa**.
+
+---
+
+### O que essas técnicas medem
+
+- efeitos individuais  
+- efeitos globais  
+- interações  
+- não linearidades  
+- variabilidade entre observações  
+
+### O que elas NÃO medem
+
+- causalidade  
+- comportamento fora da distribuição de dados  
+- efeitos condicionais no sentido causal
+
+</details>
+
+---
+
+## 5.5. Exemplos conceituais com código
+<details>
+<br>
+
+Os exemplos abaixo são **conceituais**, usando dados sintéticos, apenas para ilustrar a lógica.
+
+---
+
+### Exemplo 1 — SHAP Summary Plot (conceitual)
+
+~~~python
+import shap
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+
+# Dados sintéticos
+X = pd.DataFrame({
+    "x1": np.random.normal(0, 1, 200),
+    "x2": np.random.uniform(-2, 2, 200),
+})
+y = 3 * X["x1"] + 0.5 * (X["x2"] ** 2) + np.random.normal(0, 0.3, 200)
+
+model = RandomForestRegressor(random_state=0).fit(X, y)
+
+explainer = shap.TreeExplainer(model)
+shap_values = explainer.shap_values(X)
+
+shap.summary_plot(shap_values, X)
+~~~
+
+**Intuição:**
+
+- `x1` tem efeito aproximadamente linear  
+- `x2` tem efeito não linear  
+- o summary plot mostra quais variáveis têm maior impacto e como seus valores empurram a previsão para cima ou para baixo  
+
+---
+
+### Exemplo 2 — SHAP Dependence Plot (conceitual)
+
+~~~python
+shap.dependence_plot("x2", shap_values, X, interaction_index="x1")
+~~~
+
+**Interpretação:**
+
+- eixo X → valores de `x2`  
+- eixo Y → impacto de `x2` na previsão (SHAP value)  
+- cor → valores de `x1`  
+
+Se houver interação, o padrão de cores ao longo da curva não será aleatório.
+
+---
+
+### Exemplo 3 — Interação forte
+
+~~~python
+X["x3"] = X["x1"] * X["x2"]
+y = 3 * X["x1"] + 2 * X["x3"] + np.random.normal(0, 0.3, 200)
+
+model = RandomForestRegressor(random_state=0).fit(X, y)
+explainer = shap.TreeExplainer(model)
+shap_values = explainer.shap_values(X)
+
+shap.dependence_plot("x1", shap_values, X, interaction_index="x2")
+~~~
+
+**O que isso mostra:**
+
+- o efeito de `x1` depende de `x2`  
+- a interação aparece como padrões de cor organizados  
+- pontos com mesmo `x1` podem ter impactos diferentes dependendo de `x2`  
+
+</details>
+
+---
+
+## 5.6. Integração com capítulos anteriores
+<details>
+<br>
+
+| Técnica                 | Pergunta principal                                      |
+|------------------------|---------------------------------------------------------|
+| Permutation Importance | O que importa?                                          |
+| PDP                    | Como importa (em média)?                                |
+| SHAP individual        | Por que esta previsão específica foi feita?            |
+| SHAP Summary           | Como cada feature afeta todas as previsões?            |
+| SHAP Dependence        | Como o efeito varia entre observações? Há interações?  |
+
+SHAP avançado combina:
+
+- granularidade local (previsão por previsão)  
+- visão global (todas as observações)  
+- análise de interações e não linearidades  
+
+Ele complementa e, em muitos casos, substitui:
+
+- Permutation Importance como medida de importância global  
+- PDPs como visualização de efeito médio  
+
+</details>
+
+---
+
+## 5.7. Boas práticas e limitações
+<details>
+<br>
+
+### Boas práticas
+
+- Usar **summary plots** como primeira visão global do modelo.  
+- Usar **dependence plots** para investigar features específicas e interações.  
+- Focar nas features mais importantes antes de explorar as demais.  
+- Usar subconjuntos de dados (amostras) quando o dataset for grande, para reduzir tempo de cálculo.  
+- Sempre interpretar SHAP em conjunto com conhecimento de domínio.
+
+---
+
+### Limitações
+
+- Cálculo de SHAP pode ser lento em modelos grandes ou datasets extensos.  
+- Gráficos podem ser difíceis de interpretar sem prática.  
+- SHAP não implica causalidade — apenas descreve o comportamento do modelo.  
+- Interações sutis podem não ser óbvias visualmente.  
+- Valores extremos podem dominar a escala dos gráficos.
+
+</details>
+
+---
+
+## 5.8. Glossário técnico
+<details>
+<br>
+
+- **SHAP Summary Plot:** gráfico que mostra, para cada feature, a distribuição dos SHAP values, sua importância global e a direção do efeito.  
+- **SHAP Dependence Plot:** gráfico que mostra como o valor de uma feature se relaciona com seu SHAP value, incluindo possíveis interações via cor.  
+- **Interação:** situação em que o efeito de uma feature depende do valor de outra.  
+- **Efeito não linear:** relação em que a mudança na previsão não é proporcional à mudança na feature.  
+- **Variabilidade de efeito:** diferença de impacto da mesma feature entre diferentes observações.  
+
+</details>
+
+---
+
+## 5.9. Referência rápida
+<details>
+<br>
+
+- SHAP pode ser usado tanto para explicações **locais** quanto **globais**.  
+- **Summary plots** substituem, em muitos casos, gráficos de importância tradicionais.  
+- **Dependence plots** são uma versão enriquecida de PDPs, com distribuição completa e interação.  
+- Cores nos gráficos indicam valores de outra feature, ajudando a revelar interações.  
+- SHAP avançado é ideal para entender modelos complexos em profundidade.
+
+</details>
+
+---
+
+## 5.10. Conclusão do capítulo
+<details>
+<br>
+
+Neste capítulo, você viu que:
+
+- SHAP não serve apenas para explicar uma previsão individual.  
+- Ao agregar SHAP values, é possível obter uma visão global rica do modelo.  
+- Summary plots mostram importância, direção e distribuição dos efeitos.  
+- Dependence plots revelam não linearidades e interações entre features.  
+
+Com isso, você fecha o ciclo de técnicas de explicabilidade do curso:
+
+- **Permutation Importance** → o que importa  
+- **PDPs** → como importa em média  
+- **SHAP (básico)** → por que uma previsão específica foi feita  
+- **SHAP (avançado)** → como o modelo se comporta globalmente, com interações e variações individuais  
+
+A partir daqui, o próximo passo natural é aplicar essas técnicas em problemas reais, usando datasets próprios e construindo narrativas de explicabilidade para stakeholders.
+
+</details>
+</details>
