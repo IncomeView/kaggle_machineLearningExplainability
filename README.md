@@ -1,3 +1,5 @@
+<br>
+
 ## 📘 Machine Learning Explainability — Kaggle  
 #### *Estudo, Notebooks e Companion Book*
 
@@ -12,9 +14,8 @@ Aqui você encontrará:
 - 🏗️ **Ambiente organizado para ML**  
 - 📂 **Material de portfólio**  
 
----
-
-## 🧭 1. Objetivo do Repositório
+<br><br>
+## 🧭 Objetivo do Repositório
 
 Este repositório documenta:
 
@@ -26,9 +27,8 @@ Este repositório documenta:
 
 O foco é **entender modelos**, não apenas treiná‑los.
 
----
-
-## 📚 2. Companion Book
+<br><br>
+## 📚 Companion Book
 
 O livro **“Machine Learning Explainability — Guia Prático e Comentado”** acompanha o curso e explica:
 
@@ -55,9 +55,8 @@ Cada capítulo segue o **Prompt Mestre**, garantindo:
 - glossário  
 - checklist  
 
----
-
-## 🧪 3. Notebooks do Curso
+<br><br>
+## 🧪 Notebooks do Curso
 
 Os notebooks seguem a sequência do Kaggle:
 
@@ -78,9 +77,8 @@ Cada notebook contém:
 - experimentos adicionais  
 - integração com o Companion Book  
 
----
-
-## 🏗️ 4. Estrutura do Projeto
+<br><br>
+## 🏗️ Estrutura do Projeto
 
 ```
 machine-learning-explainability/
@@ -103,9 +101,8 @@ machine-learning-explainability/
 └── README.md
 ```
 
----
-
-## 🧠 5. Processo de Estudo
+<br><br>
+## 🧠 Processo de Estudo
 
 O estudo segue um fluxo consistente:
 
@@ -123,9 +120,8 @@ Esse processo garante:
 - documentação contínua  
 - evolução profissional  
 
----
-
-## 🧩 6. Tecnologias Utilizadas
+<br><br>
+## 🧩 Tecnologias Utilizadas
 
 - Python  
 - Pandas  
@@ -134,9 +130,8 @@ Esse processo garante:
 - Matplotlib / Seaborn  
 - Jupyter Notebook  
 
----
-
-## 🧪 7. Como Reproduzir o Ambiente
+<br><br>
+## 🧪 Como Reproduzir o Ambiente
 
 Instale as dependências:
 
@@ -150,9 +145,8 @@ Execute os notebooks:
 jupyter notebook
 ```
 
----
-
-## 🚀 8. Próximos Passos
+<br><br>
+## 🚀 Próximos Passos
 
 - Criar o Capítulo 1 — Permutation Importance  
 - Criar o notebook correspondente  
@@ -160,12 +154,12 @@ jupyter notebook
 - Criar visualizações avançadas com SHAP  
 - Consolidar insights para portfólio  
 
----
-
-## 🤝 9. Autor
+<br><br>
+## 🤝 Autor
 
 **Moacir**  
 Estudo contínuo em Machine Learning, Data Science e Engenharia de Dados.  
 Este repositório documenta sua jornada técnica e serve como portfólio profissional.
 
----
+
+<br><br>
